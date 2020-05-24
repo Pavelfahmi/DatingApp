@@ -44,33 +44,43 @@ namespace DatingApp.api.Controllers
          [HttpPost("login")]
         public async Task<IActionResult> Login(UserForLoginDTO userForLoginDTO)
         {
-         var userFromRepo= await _iauthRepository.Login(userForLoginDTO.Name.ToLower(),userForLoginDTO.Password);
-         if(userFromRepo ==null)
-         return Unauthorized();
-         var claim= new []
-         {
-             new Claim[]
-             {
-                 new Claim(ClaimTypes.NameIdentifier,userFromRepo.Id.ToString()),
-                 new Claim(ClaimTypes.Name,userFromRepo.Name)
-             }
-         };
-             var key=new SymmetricSecurityKey(Encoding.UTF8.
-             GetBytes(_config.GetSection("AppSettings:Token").Value));
 
-             var cred=new SigningCredentials(key,SecurityAlgorithms.HmacSha512Signature);
-            
-             var tokenDescriptor=new SecurityTokenDescriptor
-             {
-                 Subject=new ClaimsIdentity(),
-                 Expires=DateTime.Now.AddDays(1),
-                 SigningCredentials=cred
-             };
-             var tokenHandler=new JwtSecurityTokenHandler();
-             var token=tokenHandler.CreateToken(tokenDescriptor);
-             return Ok(new {
-                 token=tokenHandler.WriteToken(token)
-             });
+            try
+            {
+                
+                var userFromRepo = await _iauthRepository.Login(userForLoginDTO.Name.ToLower(), userForLoginDTO.Password);
+                if (userFromRepo == null)
+                    return Unauthorized();
+                var claims = new[]
+                {
+                 
+                     new Claim(ClaimTypes.NameIdentifier,userFromRepo.Id.ToString()),
+                     new Claim(ClaimTypes.Name,userFromRepo.Name)
+                   
+                };
+                var key = new SymmetricSecurityKey(Encoding.UTF8.
+                GetBytes(_config.GetSection("AppSettings:Token").Value));
+
+                var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.Now.AddDays(1),
+                    SigningCredentials = cred
+                };
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return Ok(new
+                {
+                    token = tokenHandler.WriteToken(token)
+                });
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
 
         }
         
